@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <title>Integral Calculator</title>
     <style>
         body {
@@ -24,39 +26,57 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 400px;
+            width: min-content;
             text-align: center;
+            align-items: center;
         }
         .calculator h1 {
             margin-bottom: 20px;
             color: #333;
         }
-        .integral-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 20px;
-            margin-top: 10px;
-        }
-        .integral-wrapper img {
-            width: 70px;
-            height: auto;
-        }
         .inputs {
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
             gap: 10px;
         }
-        .calculator input[type="text"],
-        .calculator input[type="number"],
-        .calculator select {
+        .integral-container {
+            display: flex;
+            position: relative;
+            align-items: center;
+            justify-content: center;
+            height: 120px;
+        }
+        .integral-symbol {
+            width: 50px;
+            height: auto;
+        }
+        .upper-limit,
+        .lower-limit {
+            position: absolute;
+            width: 30px; /* Smaller width for limits */
+            font-size: 10px; /* Adjust font size */
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px;
+        }
+        .upper-limit {
+            top: 5px; /* Position above the symbol */
+            left: 55px; /* Slightly offset to the left */
+        }
+        .lower-limit {
+            bottom: 5px; /* Position below the symbol */
+            left: 54px; /* Slightly offset to the left */
+        }
+        .function-input {
+            margin-left: 10px; /* Slightly spaced from the symbol */
             padding: 10px;
             font-size: 16px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            width: 250px;
+            width: 200px; /* Wider input for the function */
+            text-align: left;
         }
         .calculator button {
             padding: 10px;
@@ -70,25 +90,6 @@
         .calculator button:hover {
             background-color: #0056b3;
         }
-        .keypad {
-            margin-top: 20px;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            padding: 10px;
-        }
-        .keypad button {
-            padding: 8px;
-            font-size: 14px;
-            color: #333;
-            background-color: #e0e0e0;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .keypad button:hover {
-            background-color: #d6d6d6;
-        }
         .result {
             margin-top: 20px;
             font-size: 18px;
@@ -98,17 +99,65 @@
             color: red;
             font-size: 14px;
         }
-    </style>
-    <script>
-        function insertValue(value) {
-            const input = document.querySelector('input[name="function"]');
-            input.value += value;
+        ul{
+            list-style: none;
         }
 
-        function deleteLast() {
-            const input = document.querySelector('input[name="function"]');
-            input.value = input.value.slice(0, -1);
+        select[name="integral_type"] {
+            padding: 10px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007BFF; /* Match the button color */
+            border: none; /* Remove default border */
+            border-radius: 5px; /* Match button border radius */
+            cursor: pointer; /* Change cursor to pointer */
+            width: 220px; /* Set a width for consistency */
+            margin-bottom: 10px; /* Add some space below */
+            position: relative; /* Position relative for the pseudo-element */
         }
+    
+        select[name="integral_type"]::after {
+            content: ''; /* Empty content for the arrow */
+            position: absolute;
+            right: 10px; /* Position the arrow */
+            top: 50%; /* Center vertically */
+            transform: translateY(-50%); /* Adjust for vertical centering */
+            border: solid white; /* Arrow color */
+            border-width: 0 2px 2px 0; /* Arrow shape */
+            display: inline-block;
+            padding: 3px;
+            transform: rotate(45deg); /* Rotate to create the arrow */
+            pointer-events: none; /* Prevent interaction with the arrow */
+        }
+    </style>
+    <script>
+        function toggleLimits() {
+            const integralType = document.querySelector('select[name="integral_type"]').value;
+            const upperLimit = document.querySelector('.upper-limit');
+            const lowerLimit = document.querySelector('.lower-limit');
+
+            if (integralType === 'indefinite') {
+                upperLimit.style.display = 'none';
+                lowerLimit.style.display = 'none';
+            } else {
+                upperLimit.style.display = 'block';
+                lowerLimit.style.display = 'block';
+            }
+        }
+
+        function renderMathJax() {
+            MathJax.typesetPromise()
+                .then(() => console.log('MathJax rendered successfully.'))
+                .catch(err => console.error('MathJax rendering error:', err));
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const integralTypeSelect = document.querySelector('select[name="integral_type"]');
+            integralTypeSelect.addEventListener('change', toggleLimits);
+
+            toggleLimits(); // Set initial visibility on page load
+            renderMathJax(); // Render MathJax on page load
+        });
     </script>
 </head>
 <body>
@@ -117,51 +166,36 @@
             <h1>Integral Calculator</h1>
             <form method="POST">
                 {% csrf_token %}
-
                 <div class="inputs">
                     <select name="integral_type" required>
                         <option value="definite">Definite Integral</option>
                         <option value="indefinite">Indefinite Integral</option>
                     </select>
-                    <input type="text" name="function" placeholder="Enter function (e.g., x**2)" required>
-                    <input type="number" name="lower_limit" placeholder="Enter lower limit (if definite)" step="any">
-                    <input type="number" name="upper_limit" placeholder="Enter upper limit (if definite)" step="any">
+                    <div class="integral-container">
+                        <img src="https://i.imgur.com/7TrL2i8.png" alt="Integral Symbol" class="integral-symbol">
+                        <input type="number" name="upper_limit" class="upper-limit" step="any">
+                        <input type="number" name="lower_limit" class="lower-limit" step="any">
+                        <input type="text" name="function" placeholder="Masukkan fungsi (e.g., x**2)" class="function-input" required>
+                    </div>
                 </div>
-
-                <div class="keypad">
-                    <button onclick="insertValue('(')" type="button">(</button>
-                    <button onclick="insertValue(')')" type="button">)</button>
-                    <button onclick="insertValue('√')" type="button">√</button>
-                    <button onclick="deleteLast()" type="button">Del</button>
-                    <button onclick="insertValue('1')" type="button">1</button>
-                    <button onclick="insertValue('2')" type="button">2</button>
-                    <button onclick="insertValue('3')" type="button">3</button>
-                    <button onclick="insertValue('-')" type="button">-</button>
-                    <button onclick="insertValue('4')" type="button">4</button>
-                    <button onclick="insertValue('5')" type="button">5</button>
-                    <button onclick="insertValue('6')" type="button">6</button>
-                    <button onclick="insertValue('+')" type="button">+</button>
-                    <button onclick="insertValue('7')" type="button">7</button>
-                    <button onclick="insertValue('8')" type="button">8</button>
-                    <button onclick="insertValue('9')" type="button">9</button>
-                    <button onclick="insertValue('*')" type="button">*</button>
-                    <button onclick="insertValue('0')" type="button">0</button>
-                    <button onclick="insertValue('x')" type="button">x</button>
-                    <button onclick="insertValue('^')" type="button">^</button>
-                    <button type="submit" style="background-color: rgb(50, 135, 253); color: white;">Calculate</button>
-                </div>
+                <br>
+                <button type="submit" style="background-color: rgb(50, 135, 253); color: white;">Calculate</button>
             </form>
-            
+
             {% if steps %}
                 <div class="steps">
                     <h2>Steps:</h2>
-                    <pre>{{ steps }}</pre>
+                    <ul>
+                        {% for step in steps %}
+                            <li>\[ {{ step | safe }} \]</li>
+                        {% endfor %}
+                    </ul>
                 </div>
             {% endif %}
 
             {% if result %}
                 <div class="result">
-                    <strong>Result:</strong> {{ result }}
+                    <strong>Result:</strong> <span id="result-output">\( {{ result | safe }} \)</span>
                 </div>
             {% endif %}
 
@@ -172,5 +206,8 @@
             {% endif %}
         </div>
     </div>
+    <script>
+        renderMathJax(); // Re-render MathJax if content updates dynamically.
+    </script>
 </body>
 </html>
