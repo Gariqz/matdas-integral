@@ -39,6 +39,7 @@
             flex-direction: column;
             align-items: center;
             gap: 10px;
+ main
         }
         .integral-container {
             display: flex;
@@ -68,6 +69,7 @@
         .lower-limit {
             bottom: 5px; /* Position below the symbol */
             left: 54px; /* Slightly offset to the left */
+
         }
         .function-input {
             margin-left: 10px; /* Slightly spaced from the symbol */
@@ -131,6 +133,7 @@
         }
     </style>
     <script>
+     main
         function toggleLimits() {
             const integralType = document.querySelector('select[name="integral_type"]').value;
             const upperLimit = document.querySelector('.upper-limit');
@@ -157,6 +160,16 @@
 
             toggleLimits(); // Set initial visibility on page load
             renderMathJax(); // Render MathJax on page load
+
+        function renderMathJax() {
+            MathJax.typesetPromise()
+                .then(() => console.log('MathJax rendered successfully.'))
+                .catch(err => console.error('MathJax rendering error:', err));
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            renderMathJax(); // Render MathJax on page load.
+ main
         });
     </script>
 </head>
@@ -171,12 +184,17 @@
                         <option value="definite">Definite Integral</option>
                         <option value="indefinite">Indefinite Integral</option>
                     </select>
+
                     <div class="integral-container">
                         <img src="https://i.imgur.com/7TrL2i8.png" alt="Integral Symbol" class="integral-symbol">
                         <input type="number" name="upper_limit" class="upper-limit" step="any">
                         <input type="number" name="lower_limit" class="lower-limit" step="any">
                         <input type="text" name="function" placeholder="Masukkan fungsi (e.g., x**2)" class="function-input" required>
                     </div>
+                    <input type="text" name="function" placeholder="Enter function (e.g., x**2)" required>
+                    <input type="number" name="upper_limit" placeholder="Enter upper limit (if definite)" step="any">
+                    <input type="number" name="lower_limit" placeholder="Enter lower limit (if definite)" step="any">
+
                 </div>
                 <br>
                 <button type="submit" style="background-color: rgb(50, 135, 253); color: white;">Calculate</button>
@@ -185,11 +203,19 @@
             {% if steps %}
                 <div class="steps">
                     <h2>Steps:</h2>
+
                     <ul>
                         {% for step in steps %}
                             <li>\[ {{ step | safe }} \]</li>
                         {% endfor %}
                     </ul>
+
+                    <div>
+                        \[
+                        {{ steps | safe }}
+                        \]
+                    </div>
+
                 </div>
             {% endif %}
 
